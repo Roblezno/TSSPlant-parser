@@ -210,6 +210,15 @@ def test_no_hit_query_has_empty_predictions() -> None:
     assert prediction_rows(result) == []
 
 
+def test_empty_query_identifier_is_rejected() -> None:
+    """A FASTA marker without an identifier cannot produce an output ID."""
+
+    text = make_document(make_query("Promoters not found", header=">"))
+
+    with pytest.raises(TSSPlantParseError, match="query identifier is empty"):
+        parse_tssplant(StringIO(text))
+
+
 def test_printed_sequence_extra_blanks_and_crlf_are_supported() -> None:
     """Sequence text is concatenated unchanged rather than normalized."""
 

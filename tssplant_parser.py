@@ -59,6 +59,15 @@ class SelectionPolicy(str, Enum):
     CLOSEST_TO_GENE_START = "closest_to_gene_start"
 
 
+def _query_id_from_header(header: str) -> str:
+    """Extract the first query identifier from a TSSPlant header."""
+
+    normalized = header.lstrip()
+    if normalized.startswith(">"):
+        normalized = normalized[1:].lstrip()
+    return normalized.split(maxsplit=1)[0] if normalized else ""
+
+
 @dataclass(frozen=True)
 class Prediction:
     """One promoter prediction in source-file order."""
@@ -84,10 +93,7 @@ class QueryResult:
     def query_id(self) -> str:
         """Return the first token after an optional leading FASTA marker."""
 
-        header = self.header.lstrip()
-        if header.startswith(">"):
-            header = header[1:].lstrip()
-        return header.split(maxsplit=1)[0] if header else ""
+        return _query_id_from_header(self.header)
 
 
 @dataclass(frozen=True)
@@ -476,6 +482,8 @@ class _Parser:
         header = query_match.group("header")
         if not header.strip():
             self._raise(index, "query header is empty", expected="a complete FASTA defline")
+        if not _query_id_from_header(header):
+            self._raise(index, "query identifier is empty", expected="a FASTA identifier")
         index += 1
 
         length_match, index = self._expect_nonblank(
